@@ -1,0 +1,23 @@
+{
+  "name": "vetco-monorepo",
+  "version": "1.0.0",
+  "description": "VetCo - Pet medication and health management platform",
+  "scripts": {
+    "dev:web": "cd web && npm run dev",
+    "dev:mobile": "cd mobile && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "install:all": "npm install && cd web && npm install && cd ../mobile && npm install && cd ../backend && npm install",
+    "build:web": "cd web && npm run build",
+    "build:backend": "cd backend && npm run build"
+  },
+  "workspaces": [
+    "web",
+    "mobile",
+    "backend"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0"
+  }
+}

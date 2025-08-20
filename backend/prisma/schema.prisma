@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  pets              Pet[]
+  sentMessages      Message[] @relation("SentMessages")
+  receivedMessages  Message[] @relation("ReceivedMessages")
+  pushTokens        PushToken[]
+
+  @@map("users")
+}
+
+model Veterinarian {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  phone     String?
+  licenseNumber String @unique
+  clinic    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sentMessages      Message[] @relation("VetSentMessages")
+  receivedMessages  Message[] @relation("VetReceivedMessages")
+  medicationSchedules MedicationSchedule[]
+
+  @@map("veterinarians")
+}
+
+model Pet {
+  id        String   @id @default(cuid())
+  name      String
+  species   String
+  breed     String?
+  age       Int?
+  weight    Float?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  owner               User   @relation(fields: [ownerId], references: [id])
+  ownerId             String
+  medicationSchedules MedicationSchedule[]
+  breathingRates      BreathingRate[]
+
+  @@map("pets")
+}
+
+model MedicationSchedule {
+  id          String   @id @default(cuid())
+  qrCode      String   @unique
+  medication  String
+  dosage      String
+  frequency   String
+  duration    String
+  instructions String
+  startDate   DateTime
+  endDate     DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  pet           Pet           @relation(fields: [petId], references: [id])
+  petId         String
+  veterinarian  Veterinarian  @relation(fields: [veterinarianId], references: [id])
+  veterinarianId String
+  reminders     Reminder[]
+  administrations MedicationAdministration[]
+
+  @@map("medication_schedules")
+}
+
+model Reminder {
+  id        String   @id @default(cuid())
+  time      DateTime
+  message   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  schedule  MedicationSchedule @relation(fields: [scheduleId], references: [id])
+  scheduleId String
+
+  @@map("reminders")
+}
+
+model MedicationAdministration {
+  id          String   @id @default(cuid())
+  timestamp   DateTime @default(now())
+  notes       String?
+  administered Boolean @default(true)
+
+  // Relations
+  schedule    MedicationSchedule @relation(fields: [scheduleId], references: [id])
+  scheduleId  String
+
+  @@map("medication_administrations")
+}
+
+model BreathingRate {
+  id        String   @id @default(cuid())
+  rate      Int      // breaths per minute
+  timestamp DateTime @default(now())
+  notes     String?
+
+  // Relations
+  pet       Pet      @relation(fields: [petId], references: [id])
+  petId     String
+
+  @@map("breathing_rates")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  timestamp DateTime @default(now())
+  isRead    Boolean  @default(false)
+
+  // Relations - User to Veterinarian messaging
+  sender      User?         @relation("SentMessages", fields: [senderId], references: [id])
+  senderId    String?
+  recipient   User?         @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  recipientId String?
+
+  // Relations - Veterinarian messaging
+  vetSender      Veterinarian? @relation("VetSentMessages", fields: [vetSenderId], references: [id])
+  vetSenderId    String?
+  vetRecipient   Veterinarian? @relation("VetReceivedMessages", fields: [vetRecipientId], references: [id])
+  vetRecipientId String?
+
+  @@map("messages")
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  platform  String   // 'ios', 'android', 'web'
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+
+  @@map("push_tokens")
+}
